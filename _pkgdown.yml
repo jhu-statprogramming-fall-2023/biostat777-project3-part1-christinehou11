@@ -1,6 +1,5 @@
 url: ~
 project:
-  type: website
   output-dir: docs
 template:
   bootstrap: 5
