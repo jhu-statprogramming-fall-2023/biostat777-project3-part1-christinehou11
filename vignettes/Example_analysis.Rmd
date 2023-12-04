@@ -1,0 +1,242 @@
+---
+title: "Example_analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Example_analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r eval=FALSE}
+install.packages("jpeg")
+```
+
+```{r setup,message=FALSE,warning=FALSE}
+library(jpeg)
+library(ggplot2)
+library(tidyverse)
+```
+
+### Data Wrangling
+
+The source showing Cocktail data for analysis comes from <a href = "https://www.stephaniehicks.com/jhustatprogramming2023/projects/2023-11-28-project-3/#:~:text=data%20set%20from-,TidyTuesday,-that%20you%20have">TidyTuesday</a>, <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-05-26">May 26th 2020</a>. There are totally 2 different `.csv` data on the website, but I only choose one of them for personal preferences.
+
+```{r,comment=NA,message=FALSE,warning=FALSE}
+# Test if a directory named data exists locally
+if (!dir.exists(here::here("data"))) {
+    dir.create(here::here("data"))
+}
+
+# saves data only once 
+files = c("tuesdata_cocktails.rda")
+if (any(!file.exists(here::here("data",files)))) {
+    tuesdata <- tidytuesdayR::tt_load('2020-05-26')
+    cocktails <- tuesdata$cocktails
+
+    # save the files to RDA objects
+    save(cocktails, file = here::here("data","tuesdata_cocktails.rda"))
+}
+```
+
+Let's have a quick look at the dataset.
+
+```{r,comment=NA}
+# load the data
+load(here::here("data","tuesdata_cocktails.rda")) #cocktails
+n_unique <- function(x) length(unique(x))
+purrr::map_int(.x = cocktails, 
+        .f = n_unique)
+purrr::map_chr(.x = cocktails, 
+        .f = typeof)
+```
+
+```{r,comment=NA}
+any(is.na(cocktails))
+```
+
+Notice that there exists NA values in the dataset, so be careful afterwards in visualizations.
+
+```{r,comment=NA}
+dim(cocktails)
+```
+
+There are totally 2104 rows and 13 variables in the dataset.
+
+Here is a data dictionary for what all the column names mean.
+
+- https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-05-26#cocktailscsv:~:text=Data%20Dictionary-,cocktails,-.csv
+
+In this analysis, I would like to know **How does the number of ingredients used related to the different categories of alcoholic cocktail drinks?**
+
+### Visualization
+
+```{r,comment=NA}
+cocktails %>%
+  filter(alcoholic == "Alcoholic")%>%
+  select(drink)%>%
+  unique() %>%
+  nrow()
+```
+
+We only consider alcoholi cocktails in this sample analysis, and there are 478 types of alcoholic drinks included.
+
+```{r,comment=NA,fig.width= 7, fig.height=6}
+df1 = cocktails %>%
+  filter(alcoholic == "Alcoholic") %>%
+  select(category,drink, ingredient, ingredient_number) %>%
+  pivot_wider(names_from = "ingredient_number",
+              values_from = "ingredient") %>%
+  group_by(category) %>%
+  summarize(n = n())
+
+df1
+
+df1 %>%
+  ggplot() +
+  geom_col(aes(x = category, y = n),
+           fill = "#66c2a5") +
+  labs(
+    title = "Number of Drinks in Alcoholic Cocktail Categories",
+    subtitle = "Ordinary Drink has the most count among all alcoholic drink categories\nMilk/Float/Shake has the least count",
+    x = "Category",
+    y = "Count",
+    caption = "Christine Hou"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r,comment=NA, fig.width=7, fig.height=4}
+df2 = cocktails %>%
+  filter(alcoholic == "Alcoholic") %>%
+  select(drink, category,ingredient, ingredient_number) %>%
+  group_by(drink) %>%
+  summarize(num_ing = n()) %>%
+  group_by(num_ing) %>%
+  summarize(num =n()) %>%
+  mutate(percentage = num/sum(num)*100) %>%
+  mutate(num_ing = as.factor(num_ing))
+
+df2
+  
+df2 %>%
+  ggplot()+
+  geom_bar(aes(x = "", y = percentage, fill = num_ing),
+           stat = "identity") +
+  coord_polar(theta = "y", start=0) +
+  theme_void() +
+  labs(title = "Distribution of Ingredients Used in Alcoholic Drinks",
+    subtitle = "Most alcoholic drinks use 2-5 ingredients",
+    caption = "Christine Hou",
+    fill = "Number of Ingredients")
+```
+
+```{r,comment=NA, fig.width=7, fig.height= 8}
+df3 = cocktails %>%
+  filter(alcoholic == "Alcoholic") %>%
+  select(drink, category,ingredient, ingredient_number) %>%
+  group_by(drink,category) %>%
+  summarize(num_ing = n(),
+            .groups = 'drop')
+
+df3
+
+df3 %>%
+  ggplot() +
+  geom_boxplot(aes(x = category, y = num_ing)) +
+  facet_wrap(~category, scales = "free") +
+  theme_minimal() +
+  coord_cartesian(ylim = c(0,13)) +
+  labs(
+    x = "Category",
+    y = "Number of Ingredients",
+    title = "Number of Ingredients Used in Alcoholic Drinks",
+    subtitle = "Drinks belonging to Homemade Liqueur category has the highest number of ingredients (12)\nDrinks belonging to Cocktail and Ordinary Drink category has the least number of ingredients (1)",
+    caption = "Christine Hou"
+  )
+```
+
+We can use the functions in `jpeg` to display the picture of the cocktail. For example, the alcoholic drink with 12 ingredients belonging to **Homemade Liqueur** category is 
+
+```{r,comment=NA,message=FALSE}
+url = cocktails %>%
+  filter(category == "Homemade Liqueur",
+         ingredient_number == 12) %>%
+  pull(drink_thumb)
+
+if (!file.exists("homemade.jpg")) {
+    download.file(url,
+              destfile = paste0(getwd(),"/homemade.jpg"),
+              mode = "wb")
+}
+
+myjpeg_array <- readJPEG(source = "homemade.jpg")
+
+plot(0:10,0:10,type="n",ann=FALSE,axes=FALSE)
+rasterImage(myjpeg_array,0,0,6,10)
+```
+
+We can also rewrite the jpg to higher quality if the plot itself is not clear.
+
+```{r,comment=NA}
+img <- readJPEG("homemade.jpg")
+r <- writeJPEG(img, raw(), quality=1)
+img2 <- readJPEG(r)
+plot(0:10,0:10,type="n",ann=FALSE,axes=FALSE)
+rasterImage(img2,0,0,6,10)
+```
+
+
+
+
+### Conclusion
+
+There are totally 478 alcoholic drinks, and Ordinary Drink is the most common category. Every drink contains different ingredients inside, and most drinks contain 3-5 ingredients inside. Drinks belonging to Homemade Liqueur category has the highest number of ingredients which is 12, and some drinks belonging to Cocktail and Ordinary Drink category has the least number of ingredients which is 1.
+
+### Functions
+
+- `purrr`
+
+  - map_int()
+  
+  - map_chr()
+
+- `jpeg`
+
+  - readJPEG()
+  
+  - writeJPEG()
+
+- `dplyr`, `tidyr`, `lubridate`, `stringr`, or `forcats`
+  
+  - filter()
+  
+  - select()
+  
+  - summarize()
+  
+  - group_by()
+  
+  - mutate()
+  
+  - pull()
+  
+  - pivot_wider()
+
+- `ggplot2`
+
+  - geom_bar()
+  
+  - geom_col()
+  
+  - geom_boxplot()
+  
+  - facet_wrap()

@@ -1,0 +1,13 @@
+url: ~
+template:
+  bootstrap: 5
+  bootswatch: litera
+  theme: github-light
+  bslib:
+    bg: "#A5A9AE"
+    fg: "#0E0E0F"
+    primary: "#0D5CD6"
+    code-bg: "#2b2b2b"
+    base_font: {google: "Hedvig Letters Serif"}
+    heading_font: {google: "Open Sans"}
+

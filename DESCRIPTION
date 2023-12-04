@@ -9,3 +9,7 @@ License: GPL-2 | GPL-3
 SystemRequirements: libjpeg
 URL: https://www.rforge.net/jpeg/
 BugReports: https://github.com/s-u/jpeg/issues
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
