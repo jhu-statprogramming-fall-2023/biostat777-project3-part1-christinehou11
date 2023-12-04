@@ -1,5 +1,6 @@
 url: ~
-output-dir: docs
+project:
+  output-dir: docs
 template:
   bootstrap: 5
   bootswatch: litera
