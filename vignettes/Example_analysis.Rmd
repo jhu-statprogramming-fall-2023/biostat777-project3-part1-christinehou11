@@ -26,7 +26,7 @@ library(tidyverse)
 
 ### Data Wrangling
 
-The source showing Cocktail data for analysis comes from <a href = "https://www.stephaniehicks.com/jhustatprogramming2023/projects/2023-11-28-project-3/#:~:text=data%20set%20from-,TidyTuesday,-that%20you%20have">TidyTuesday</a>, <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-05-26">May 26th 2020</a>. There are totally 2 different `.csv` data on the website, but I only choose one of them for personal preferences.
+The source showing Cocktail data for analysis comes from <a href = "https://www.tidytuesday.com/">TidyTuesday</a>, <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-05-26">May 26th 2020</a>. There are totally 2 different `.csv` data on the website, but I only choose one of them for personal preferences.
 
 ```{r,comment=NA,message=FALSE,warning=FALSE}
 # Test if a directory named data exists locally
